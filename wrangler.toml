@@ -1,0 +1,19 @@
+name = "iptv-org-custom"
+main = "index.js"
+compatibility_date = "2024-12-06"
+
+[observability]
+[observability.logs]
+enabled = false
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[env.production]
+name = "iptvorg"
+
+[env.staging]
+name = "iptvorg-staging"
+
+[env.development]
+name = "iptvorg-development"
