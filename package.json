@@ -13,6 +13,6 @@
     "test": "wrangler dev --local"
   },
   "devDependencies": {
-    "wrangler": "^3.78.0"
+    "wrangler": "^4.58.0"
   }
 }
