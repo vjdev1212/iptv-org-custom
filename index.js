@@ -124,10 +124,6 @@ function parseM3U(content) {
   return channels;
 }
 
-function generateTvgId(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
 function cleanChannelName(name) {
   // Remove HD, SD, @HD, @SD and country codes, and extra spaces
   return name
@@ -146,19 +142,24 @@ function matchAndEnhanceChannels(channels, config) {
   // Flatten the nested config structure
   for (const [language, groups] of Object.entries(config)) {
     for (const [groupTitle, tvgIds] of Object.entries(groups)) {
-      for (const tvgId of tvgIds) {
+      for (const configTvgId of tvgIds) {
         // Skip if we've already matched this tvg-id
-        if (matched.has(tvgId)) {
+        if (matched.has(configTvgId)) {
           continue;
         }
         
-        // Find matching channel from source by tvg-id (only first match)
-        const matchedChannel = channels.find(ch => ch.tvgId === tvgId);
+        // Find matching channel from source by tvg-id
+        // Match both exact and with @SD/@HD/@India etc suffixes
+        const matchedChannel = channels.find(ch => {
+          // Remove @ suffix and everything after it for comparison
+          const baseTvgId = ch.tvgId.split('@')[0];
+          return baseTvgId === configTvgId || ch.tvgId === configTvgId;
+        });
         
         if (matchedChannel) {
           const cleanName = cleanChannelName(matchedChannel.name);
           enhanced.push({
-            tvgId: tvgId,
+            tvgId: matchedChannel.tvgId, // Use the original tvg-id from source
             tvgName: cleanName,
             tvgLanguage: language,
             tvgType: groupTitle,
@@ -166,7 +167,7 @@ function matchAndEnhanceChannels(channels, config) {
             url: matchedChannel.url,
             originalName: matchedChannel.name
           });
-          matched.add(tvgId);
+          matched.add(configTvgId);
         }
       }
     }
