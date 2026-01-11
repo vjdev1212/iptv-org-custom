@@ -217,10 +217,7 @@ export default {
       let allChannels = parseM3U(content);
       let matchedChannels = matchAndEnhanceChannels(allChannels, CHANNEL_CONFIG);
       let sortedChannels = sortChannels(matchedChannels);
-      
-      // Debug info
-      const debugInfo = `# Total source channels: ${allChannels.length}\n# Matched channels: ${sortedChannels.length}\n# First 5 source channel names:\n${allChannels.slice(0, 5).map(ch => `# - ${ch.originalName}`).join('\n')}\n\n`;
-      
+          
       // Generate enhanced M3U
       const enhancedM3U = debugInfo + channelsToM3U(sortedChannels);
       
