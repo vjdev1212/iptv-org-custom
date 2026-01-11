@@ -1,77 +1,78 @@
+// Skip @HD and @SD
 const CHANNEL_CONFIG = {
   "Tamil": {
     "Kids": [
-      'Chutti TV',
+      'ChuttiTV.in',
     ],
     "Movies": [
-      'J Movie',
-      'Sun Life',
-      'Raj Digital Plus',
-      'KTV',
-      'Suriyan TV',
-      'Anandham TV',
-      'Roja Movies'
+      'JMovie.in',
+      'SunLife.in',
+      'RajDigitalPlus.in',
+      'KTV.in',
+      'SuriyanTV.in',
+      'AnandhamTV.in',
+      'RojaMovies.in'
     ],
     "News": [
-      'News18 Tamil Nadu',
-      'Polimer News',
-      'News 7 Tamil',
-      'Sun News',
-      'Puthiya Thalaimurai',
-      'Thanthi TV',
-      'Madhimugam TV',
-      'Win TV',
-      'News J',
-      'News Tamil 24x7',
-      'Velicham',
-      'Tamil Janam'
+      'News18TamilNadu.in',
+      'PolimerNews.in',
+      'News7Tamil.in',
+      'SunNews.in',
+      'PuthiyaThalaimurai.in',
+      'ThanthiTV.in',
+      'MadhimugamTV.in',
+      'WinTV.in',
+      'NewsJ.in',
+      'NewsTamil24x7.in',
+      'Velicham.in',
+      'TamilJanam.in'
     ],
     "Entertainment": [
-      'Jaya TV',
-      'Colors Tamil HD',
-      'Polimer TV',
-      'Raj TV',
-      'Makkal TV',
-      'Adithya TV',
-      'Peppers TV',
-      'Vendhar TV',
-      'Sun TV',
-      'Vaanavil TV',
-      'Kalaignar TV',
-      'Moon TV',
-      'MK Six',
-      'Sana TV',
-      'Subin TV',
-      'Brio TV',
-      'NTC TV',
-      'Suriya TV',
-      'Roja TV'
+      'JayaTV.in',
+      'ColorsTamil.in',
+      'PolimerTV.in',
+      'RajTV.in',
+      'MakkalTV.in',
+      'AdithyaTV.in',
+      'PeppersTV.in',
+      'VendharTV.in',
+      'SunTV.in',
+      'VaanavilTV.in',
+      'KalaignarTV.in',
+      'MoonTV.in',
+      'MKSix.in',
+      'SanaTV.in',
+      'SubinTV.in',
+      'BrioTV.in',
+      'NTCTV.in',
+      'SuriyaTV.in',
+      'RojaTV.in'
     ],
     "Music": [
-      'Raj Musix Tamil',
-      'Tunes 6',
-      'Sun Music',
-      'Sana Plus',
-      'Aaryaa TV',
-      'Ultimate TV'
+      'RajMusixTamil.in',
+      'Tunes6.in',
+      'SunMusic.in',
+      'SanaPlus.in',
+      'AaryaaTV.in',
+      'UltimateTV.in'
     ],
     "Infotainment": [
-      'History TV18 HD'
+      'HistoryTV18.in'
     ],
     "Devotional": [
-      'Angel TV',
-      'Sai TV',
-      'Madha TV',
-      'SVBC',
-      'SVBC 3',
-      'SVBC 4',
-      'OM TV'
+      'AngelTV.in',
+      'SaiTV.in',
+      'MadhaTV.in',
+      'SVBC.in',
+      'SVBC3.in',
+      'SVBC4.in',
+      'OMTV.in'
     ],
     "Lifestyle": [
-      'Travelxp'
+      'Travelxp.in'
     ],
     "Sports": [
-      'Sony Sports Ten 2'
+      'SonySportsTen2.in'
     ],
     "Shopping": []
   },
@@ -87,6 +88,7 @@ const CHANNEL_CONFIG = {
 };
 
 const IPTV_SOURCE_URL = 'https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/in.m3u';
+
 // ============================================
 
 function parseM3U(content) {
@@ -104,16 +106,16 @@ function parseM3U(content) {
       const tvgId = tvgIdMatch ? tvgIdMatch[1] : '';
       
       currentChannel = {
-        originalTvgId: tvgId,
-        originalName: nameMatch ? nameMatch[1].trim() : ''
+        tvgId: tvgId,
+        name: nameMatch ? nameMatch[1].trim() : ''
       };
     } else if (line && !line.startsWith('#') && currentChannel) {
       currentChannel.url = line;
       
       // Only add first occurrence of each tvg-id
-      if (!seen.has(currentChannel.originalTvgId)) {
+      if (!seen.has(currentChannel.tvgId)) {
         channels.push(currentChannel);
-        seen.set(currentChannel.originalTvgId, true);
+        seen.set(currentChannel.tvgId, true);
       }
       currentChannel = null;
     }
@@ -127,41 +129,44 @@ function generateTvgId(name) {
 }
 
 function cleanChannelName(name) {
-  // Remove HD, SD, and extra spaces
-  return name.replace(/\s+(HD|SD)\+?/gi, '').replace(/\s+/g, ' ').trim();
+  // Remove HD, SD, @HD, @SD and country codes, and extra spaces
+  return name
+    .replace(/@(HD|SD)/gi, '')
+    .replace(/\s+(HD|SD)\+?/gi, '')
+    .replace(/\s+\([^)]+\)/g, '') // Remove parenthetical info
+    .replace(/\s+\[[^\]]+\]/g, '') // Remove bracketed info
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function matchAndEnhanceChannels(channels, config) {
   const enhanced = [];
-  const matched = new Set(); // Track which channels we've already matched
+  const matched = new Set(); // Track which tvg-ids we've already matched
   
   // Flatten the nested config structure
   for (const [language, groups] of Object.entries(config)) {
-    for (const [groupTitle, channelNames] of Object.entries(groups)) {
-      for (const channelName of channelNames) {
-        // Skip if we've already matched this channel
-        if (matched.has(channelName.toLowerCase())) {
+    for (const [groupTitle, tvgIds] of Object.entries(groups)) {
+      for (const tvgId of tvgIds) {
+        // Skip if we've already matched this tvg-id
+        if (matched.has(tvgId)) {
           continue;
         }
         
-        // Find matching channel from source (only first match)
-        const matchedChannel = channels.find(ch => {
-          const searchText = `${ch.originalName} ${ch.originalTvgId}`.toLowerCase();
-          return searchText.includes(channelName.toLowerCase());
-        });
+        // Find matching channel from source by tvg-id (only first match)
+        const matchedChannel = channels.find(ch => ch.tvgId === tvgId);
         
         if (matchedChannel) {
-          const cleanName = cleanChannelName(channelName);
+          const cleanName = cleanChannelName(matchedChannel.name);
           enhanced.push({
-            tvgId: generateTvgId(cleanName),
+            tvgId: tvgId,
             tvgName: cleanName,
             tvgLanguage: language,
             tvgType: groupTitle,
             groupTitle: groupTitle,
             url: matchedChannel.url,
-            originalName: matchedChannel.originalName
+            originalName: matchedChannel.name
           });
-          matched.add(channelName.toLowerCase());
+          matched.add(tvgId);
         }
       }
     }
@@ -189,7 +194,7 @@ function channelsToM3U(channels) {
   let m3u = '#EXTM3U\n';
   
   for (const ch of channels) {
-    const extinf = `#EXTINF:-1 tvg-id="${ch.tvgId}" tvg-name="${ch.tvgName}" tvg-language="${ch.tvgLanguage}" tvg-type="${ch.tvgType}" group-title="${ch.groupTitle}", ${ch.tvgName}`;
+    const extinf = `#EXTINF:-1 tvg-id="${ch.tvgId}" tvg-name="${ch.tvgName}" tvg-language="${ch.tvgLanguage}" tvg-type="${ch.tvgType}" group-title="${ch.groupTitle}",${ch.tvgName}`;
     m3u += `${extinf}\n${ch.url}\n`;
   }
   
@@ -219,7 +224,7 @@ export default {
       let sortedChannels = sortChannels(matchedChannels);
           
       // Generate enhanced M3U
-      const enhancedM3U = debugInfo + channelsToM3U(sortedChannels);
+      const enhancedM3U = channelsToM3U(sortedChannels);
       
       return new Response(enhancedM3U, {
         headers: {
